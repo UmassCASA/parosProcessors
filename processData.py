@@ -11,7 +11,21 @@ import argparse
 
 import pandas as pd
 
-def main():
+def parseArgs():
+    # cli arguments
+    parser = argparse.ArgumentParser(description="Calculates FFTs from datastream bucket")
+    parser.add_argument("starttime", type=str, help="ISO format start timestamp in UTC time")
+    parser.add_argument("endtime", type=str, help="ISO format end timestamp in UTC time")
+    parser.add_argument("-m", "--module", type=str, default=[], action="append", help="Specify modules to run (default is all)")
+
+    args = parser.parse_args()
+
+    start_time = datetime.fromisoformat(args.starttime)
+    end_time = datetime.fromisoformat(args.endtime)
+
+    return start_time, end_time, args.module
+
+def process(start_time, end_time, modules = []):
     # hardcoded parameters
     time_delta = 10  # In minutes, set equivalent to cron job
     bucket_prefix = "paros-"
@@ -26,19 +40,7 @@ def main():
     with open('./INFLUXAPIKEY', 'r') as file:
         influxdb_apikey = file.read().rstrip()
 
-    # cli arguments
-    parser = argparse.ArgumentParser(description='Calculates FFTs from datastream bucket')
-    parser.add_argument("starttime", type=str, help="ISO format start timestamp in UTC time")
-    parser.add_argument("endtime", type=str, help="ISO format end timestamp in UTC time")
-    parser.add_argument("-m", "--module", type=str, default=[], action="append", help="Specify modules to run (default is all)")
-
-    args = parser.parse_args()
-
-    # create time objects
-        
-    start_time = datetime.fromisoformat(args.starttime)
-    end_time = datetime.fromisoformat(args.endtime)
-
+    # modify time objects
     start_time = start_time.replace(second = 0, microsecond = 0)
     end_time = end_time.replace(second = 0, microsecond = 0)
 
@@ -65,7 +67,7 @@ def main():
             module_name = file.stem
             module_name_trimmed = module_name.split("_")[1]
 
-            if len(args.module) > 0 and module_name_trimmed not in args.module:
+            if len(modules) > 0 and module_name_trimmed not in modules:
                 # skip this module
                 continue
 
@@ -138,12 +140,16 @@ def main():
 
                         # run module
                         print("...Done")
-                        print(f"Running module {module_name_trimmed} on sensor {device}")
+                        print(f"Running module {module_name_trimmed} on sensor {device}...")
                         output = module.main(df)
+                        print("...Done")
                         
                         output[influxdb_sensorid_tagkey] = device
 
                         influxdb_write_api.write(output_bucket_name, influxdb_org, record=output, data_frame_measurement_name=measurement, data_frame_tag_columns=[influxdb_sensorid_tagkey], utc=True)
+
+def main():
+    process(parseArgs())
 
 if __name__ == "__main__":
     main()
