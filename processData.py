@@ -27,7 +27,7 @@ def parseArgs():
 
 def process(start_time, end_time, modules = []):
     # hardcoded parameters
-    time_delta = 10  # In minutes, set equivalent to cron job
+    df_chunk_size = 128  # Don't change this - the standard HTTP request chunk size
     bucket_prefix = "paros-"
 
     influxdb_sensorid_tagkey = "sensor_id"
@@ -78,6 +78,7 @@ def process(start_time, end_time, modules = []):
             # Check if the module has a main() function and run it with two arguments
             if hasattr(module, "main"):
                 print(f"Running module {module_name_trimmed}...")
+                print()
 
                 params = list(inspect.signature(module.main).parameters)
                 input_bucket_name = bucket_prefix + params[0]
@@ -85,6 +86,7 @@ def process(start_time, end_time, modules = []):
 
                 print(f"Input data: {input_bucket_name}")
                 print(f"Output data: {output_bucket_name}")
+                print()
 
                 # ! TODO check if buckets exist
 
@@ -138,15 +140,44 @@ def process(start_time, end_time, modules = []):
                         df = pd.DataFrame(data)
                         df = df.pivot(index="timestamp", columns="field", values="value")
 
+                        # we must check if there are any missing values:
+                        time_deltas = df.index.to_series().diff()
+
+                        if time_deltas.nunique() > 1:
+                            print("Found missing data, skipping")
+                            continue
+
                         # run module
-                        print("...Done")
+                        print("Query Done")
+                        print()
+
                         print(f"Running module {module_name_trimmed} on sensor {device}...")
                         output = module.main(df)
-                        print("...Done")
+                        print("Module Done")
+                        print()
                         
                         output[influxdb_sensorid_tagkey] = device
 
-                        influxdb_write_api.write(output_bucket_name, influxdb_org, record=output, data_frame_measurement_name=measurement, data_frame_tag_columns=[influxdb_sensorid_tagkey], utc=True)
+                        # Split up Dataframe into Batch Chunks
+                        df_mem_usage = df.memory_usage(index=True, deep=True).sum()
+                        df_chunk_size_bytes = df_chunk_size * 1024
+                        df_chunksize = int((df_chunk_size_bytes / df_mem_usage) * len(df))
+                        
+                        print(f"Using a dataframe chunk size of {df_chunksize} rows")
+                        print()
+
+                        output_chunks = [output[i:i + df_chunksize] for i in range(0, output.shape[0], df_chunksize)]
+                        total_chunks = len(output_chunks)
+
+                        print("Starting Upload to InfluxDB...")
+                        for i,chunk in enumerate(output_chunks):
+                            print(f"[{i + 1}/{total_chunks}]")
+                            influxdb_write_api.write(output_bucket_name, influxdb_org, record=chunk, data_frame_measurement_name=measurement, data_frame_tag_columns=[influxdb_sensorid_tagkey], utc=True)
+                        
+                        print("Upload Done")
+                        print()
+
+                    print("OK")
 
 def main():
     process(parseArgs())

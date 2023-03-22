@@ -17,7 +17,7 @@ def main():
     now = datetime.utcnow()
 
     delay_buffer = 30  # in minutes
-    amount_to_process = 10  # in minutes (Cron should run every half of this value in minutes (if 10 then every 5 mins))
+    amount_to_process = 30  # in minutes (Cron should run every half of this value in minutes (if 10 then every 5 mins))
 
     start_time = now - timedelta(minutes = delay_buffer + amount_to_process)
     end_time = now - timedelta(minutes = delay_buffer)

@@ -7,6 +7,8 @@ def main(datastream):
     step_size = 8
     value_col = "value"
 
+    epsilon = 1e-15
+
     df = datastream
 
     # calculate fs
@@ -19,6 +21,7 @@ def main(datastream):
         window_data = df[value_col].iloc[i : i + window_size]
         fft_result = np.fft.fft(window_data)
         fft_mag = np.abs(fft_result)
+        fft_mag = 20 * np.log10(fft_mag + epsilon)
         fft_results.append(fft_mag[: window_size // 2])
 
     # Calculate Frequency Bins
