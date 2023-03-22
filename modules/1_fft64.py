@@ -1,13 +1,12 @@
 import pandas as pd
 import numpy as np
 
-
 def main(datastream):
     window_size = 64
     step_size = 8
     value_col = "value"
 
-    epsilon = 1e-15
+    epsilon = 1e-9
 
     df = datastream
 
