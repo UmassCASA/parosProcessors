@@ -16,7 +16,7 @@ def main():
     # Calcualte range timestamps
     now = datetime.utcnow()
 
-    delay_buffer = 30  # in minutes
+    delay_buffer = 15  # in minutes (set to cron top frequency)
     amount_to_process = 30  # in minutes (Cron should run every half of this value in minutes (if 10 then every 5 mins))
 
     start_time = now - timedelta(minutes = delay_buffer + amount_to_process)
