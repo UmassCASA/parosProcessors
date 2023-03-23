@@ -30,7 +30,7 @@ def main():
     print(f"End Time: {end_time.isoformat()}")
     print()
 
-    processData.process(start_time, end_time)
+    processData.process(start_time, end_time, "live")
 
 if __name__ == "__main__":
     main()

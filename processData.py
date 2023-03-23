@@ -16,6 +16,7 @@ def parseArgs():
     parser = argparse.ArgumentParser(description="Calculates FFTs from datastream bucket")
     parser.add_argument("starttime", type=str, help="ISO format start timestamp in UTC time")
     parser.add_argument("endtime", type=str, help="ISO format end timestamp in UTC time")
+    parser.add_argument("module_group", type=str, help="Module group name")
     parser.add_argument("-m", "--module", type=str, default=[], action="append", help="Specify modules to run (default is all)")
 
     args = parser.parse_args()
@@ -23,12 +24,12 @@ def parseArgs():
     start_time = datetime.fromisoformat(args.starttime)
     end_time = datetime.fromisoformat(args.endtime)
 
-    return start_time, end_time, args.module
+    return start_time, end_time, args.module_group, args.module
 
-def process(start_time, end_time, modules = []):
+def process(start_time, end_time, module_group, modules = []):
     # hardcoded parameters
     df_chunk_size = 128  # Don't change this - the standard HTTP request chunk size
-    bucket_prefix = "paros-"
+    bucket_prefix = "paros-" + module_group + "-"
 
     influxdb_sensorid_tagkey = "sensor_id"
 
@@ -58,7 +59,7 @@ def process(start_time, end_time, modules = []):
     idb_range_str = "range(start: " + start_time.isoformat() + "Z, stop: " + end_time.isoformat() + "Z)"
 
     # Path to the 'modules' directory relative to the current file
-    modules_path = Path(__file__).parent / 'modules'
+    modules_path = Path(__file__).parent / module_group
 
     # Iterate over each file in the 'modules' directory
     for file in modules_path.iterdir():
