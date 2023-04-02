@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-# exponential smoothing
+# residual (raw - exponential smoothing)
 def main(datastream):
 
     value_col = "value"
@@ -20,7 +20,9 @@ def main(datastream):
         predict = str(alpha * float(x_t) + (1 - alpha) *float(exp_smooth[i-1]))
         exp_smooth.append(predict)
     
+    residual = [float(x) - float(y) for x, y in zip(df[value_col], exp_smooth)]
 
-    result_df = pd.DataFrame(exp_smooth, columns=["value"], index=df.index)
+    result_df = pd.DataFrame(residual, columns=["value"], index=df.index)
+
 
     return result_df
