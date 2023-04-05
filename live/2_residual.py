@@ -12,9 +12,7 @@ def main(datastream):
 
     exp_smooth = [] # empty list for the exponential smoothing algorithm
     exp_smooth.append(df[value_col].loc[0]) # first index value
-
-    a = 0
-
+    
     for i in range(1,range(len_df)):
         x_t = df[value_col].loc[i]
         predict = str(alpha * float(x_t) + (1 - alpha) *float(exp_smooth[i-1]))
