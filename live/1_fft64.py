@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 
+# datastream parameter = paros-live-datastream bucket
 def main(datastream):
     window_size = 64
     step_size = 8
@@ -11,8 +12,9 @@ def main(datastream):
     df = datastream
 
     # calculate fs
-    time_delta = df.index[1] - df.index[0]
-    fs = 1 / time_delta.total_seconds()
+    #time_delta = df.index[1] - df.index[0]
+    #fs = 1 / time_delta.total_seconds()
+    fs = 20
 
     fft_results = []
 
@@ -32,5 +34,6 @@ def main(datastream):
     timestamps = timestamps[:len(fft_results)]
 
     result_df = pd.DataFrame(fft_results, columns=freq_bins, index=timestamps)
+    print(result_df)
 
     return result_df

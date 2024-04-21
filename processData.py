@@ -9,15 +9,17 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 from datetime import datetime, timedelta
 import argparse
 
+import sys
+
 import pandas as pd
 
 def parseArgs():
     # cli arguments
     parser = argparse.ArgumentParser(description="Calculates FFTs from datastream bucket")
-    parser.add_argument("starttime", type=str, help="ISO format start timestamp in UTC time")
-    parser.add_argument("endtime", type=str, help="ISO format end timestamp in UTC time")
-    parser.add_argument("module_group", type=str, help="Module group name")
-    parser.add_argument("-m", "--module", type=str, default=[], action="append", help="Specify modules to run (default is all)")
+    parser.add_argument("starttime", help="ISO format start timestamp in UTC time")
+    parser.add_argument("endtime", help="ISO format end timestamp in UTC time")
+    parser.add_argument("module_group", help="Module group name")
+    parser.add_argument("-m", "--module", default=[], action="append", help="Specify modules to run (default is all)")
 
     args = parser.parse_args()
 
@@ -28,10 +30,10 @@ def parseArgs():
 
 def process(start_time, end_time, module_group, modules = []):
     # hardcoded parameters
-    df_chunk_size = 128  # Don't change this - the standard HTTP request chunk size
+    df_chunk_size = 32  # Don't change this - the standard HTTP request chunk size
     bucket_prefix = "paros-" + module_group + "-"
 
-    influxdb_sensorid_tagkey = "sensor_id"
+    influxdb_sensorid_tagkey = "id"
 
     influxdb_apikey = ""
     influxdb_org = "paros"
@@ -82,7 +84,7 @@ def process(start_time, end_time, module_group, modules = []):
                 print()
 
                 params = list(inspect.signature(module.main).parameters)
-                input_bucket_name = bucket_prefix + params[0]
+                input_bucket_name = "parosbox"
                 output_bucket_name = bucket_prefix + module_name_trimmed
 
                 print(f"Input data: {input_bucket_name}")
@@ -142,11 +144,11 @@ def process(start_time, end_time, module_group, modules = []):
                         df = df.pivot(index="timestamp", columns="field", values="value")
 
                         # we must check if there are any missing values:
-                        time_deltas = df.index.to_series().diff()
+                        #time_deltas = df.index.to_series().diff()
 
-                        if time_deltas.nunique() > 1:
-                            print("Found missing data, skipping")
-                            continue
+                        #if time_deltas.nunique() > 1:
+                            #print("Found missing data, skipping")
+                            #continue
 
                         # run module
                         print("Query Done")
@@ -181,7 +183,8 @@ def process(start_time, end_time, module_group, modules = []):
                     print("OK")
 
 def main():
-    process(parseArgs())
+    params = parseArgs()
+    process(params[0], params[1], params[2], params[3])
 
 if __name__ == "__main__":
     main()
