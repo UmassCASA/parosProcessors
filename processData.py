@@ -143,21 +143,20 @@ def process(start_time, end_time, module_group, modules = []):
                         df = pd.DataFrame(data)
                         df = df.pivot(index="timestamp", columns="field", values="value")
 
-                        # we must check if there are any missing values:
-                        #time_deltas = df.index.to_series().diff()
-
-                        #if time_deltas.nunique() > 1:
-                            #print("Found missing data, skipping")
-                            #continue
-
                         # run module
                         print("Query Done")
+
+                        print(df.head())
+
                         print()
 
                         print(f"Running module {module_name_trimmed} on sensor {device}...")
                         output = module.main(df)
                         print("Module Done")
                         print()
+
+                        if output is None:
+                            continue
                         
                         output[influxdb_sensorid_tagkey] = device
 

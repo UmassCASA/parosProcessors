@@ -5,7 +5,13 @@ import numpy as np
 def main(datastream):
     window_size = 64
     step_size = 8
-    value_col = "value"
+    #value_col = "value"
+    if "speed" in datastream.columns:
+        value_col = "speed"
+    elif "value" in datastream.columns:
+        value_col = "value"
+    else:
+        return  # Exit early if neither column exists
 
     epsilon = 1e-9
 
